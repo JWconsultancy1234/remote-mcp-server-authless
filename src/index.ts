@@ -4,115 +4,74 @@ import { z } from "zod";
 
 // Define our MCP agent with tools
 export class MyMCP extends McpAgent {
-  server = new McpServer({
-    name: "Authless Calculator",
-    version: "1.0.0",
-  });
+	server = new McpServer({
+		name: "Authless Calculator",
+		version: "1.0.0",
+	});
 
-  async init() {
-    // Haal je secrets op (zorg ervoor dat de secrets zijn ingesteld via wrangler)
-    const clientId = await this.secret("BOL_CLIENT_ID");
-    const clientSecret = await this.secret("BOL_CLIENT_SECRET");
+	async init() {
+		// Simple addition tool
+		this.server.tool(
+			"add",
+			{ a: z.number(), b: z.number() },
+			async ({ a, b }) => ({
+				content: [{ type: "text", text: String(a + b) }],
+			})
+		);
 
-    // Simple addition tool
-    this.server.tool(
-      "add",
-      { a: z.number(), b: z.number() },
-      async ({ a, b }) => ({
-        content: [{ type: "text", text: String(a + b) }],
-      })
-    );
-
-    // Calculator tool with multiple operations
-    this.server.tool(
-      "calculate",
-      {
-        operation: z.enum(["add", "subtract", "multiply", "divide"]),
-        a: z.number(),
-        b: z.number(),
-      },
-      async ({ operation, a, b }) => {
-        let result: number;
-        switch (operation) {
-          case "add":
-            result = a + b;
-            break;
-          case "subtract":
-            result = a - b;
-            break;
-          case "multiply":
-            result = a * b;
-            break;
-          case "divide":
-            if (b === 0)
-              return {
-                content: [
-                  {
-                    type: "text",
-                    text: "Error: Cannot divide by zero",
-                  },
-                ],
-              };
-            result = a / b;
-            break;
-        }
-        return { content: [{ type: "text", text: String(result) }] };
-      }
-    );
-
-    // New tool to fetch product info from bol.com API
-    this.server.tool(
-      "getBolProduct",
-      { productId: z.string() },
-      async ({ productId }) => {
-        // Make the API call to bol.com
-        const response = await fetch(`https://api.bol.com/retailer/products/${productId}`, {
-          method: "GET",
-          headers: {
-            "Authorization": `Bearer ${clientId}:${clientSecret}`,
-            "Accept": "application/json",
-          },
-        });
-
-        if (!response.ok) {
-          return {
-            content: [
-              {
-                type: "text",
-                text: `Error fetching data for product ID ${productId}: ${response.statusText}`,
-              },
-            ],
-          };
-        }
-
-        const data = await response.json();
-        return {
-          content: [
-            {
-              type: "text",
-              text: `Product details: ${JSON.stringify(data)}`,
-            },
-          ],
-        };
-      }
-    );
-  }
+		// Calculator tool with multiple operations
+		this.server.tool(
+			"calculate",
+			{
+				operation: z.enum(["add", "subtract", "multiply", "divide"]),
+				a: z.number(),
+				b: z.number(),
+			},
+			async ({ operation, a, b }) => {
+				let result: number;
+				switch (operation) {
+					case "add":
+						result = a + b;
+						break;
+					case "subtract":
+						result = a - b;
+						break;
+					case "multiply":
+						result = a * b;
+						break;
+					case "divide":
+						if (b === 0)
+							return {
+								content: [
+									{
+										type: "text",
+										text: "Error: Cannot divide by zero",
+									},
+								],
+							};
+						result = a / b;
+						break;
+				}
+				return { content: [{ type: "text", text: String(result) }] };
+			}
+		);
+	}
 }
 
 export default {
-  fetch(request: Request, env: Env, ctx: ExecutionContext) {
-    const url = new URL(request.url);
+	fetch(request: Request, env: Env, ctx: ExecutionContext) {
+		const url = new URL(request.url);
 
-    if (url.pathname === "/sse" || url.pathname === "/sse/message") {
-      // @ts-ignore
-      return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
-    }
+		if (url.pathname === "/sse" || url.pathname === "/sse/message") {
+			// @ts-ignore
+			return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
+		}
 
-    if (url.pathname === "/mcp") {
-      // @ts-ignore
-      return MyMCP.serve("/mcp").fetch(request, env, ctx);
-    }
+		if (url.pathname === "/mcp") {
+			// @ts-ignore
+			return MyMCP.serve("/mcp").fetch(request, env, ctx);
+		}
 
-    return new Response("Not found", { status: 404 });
-  },
+		return new Response("Not found", { status: 404 });
+	},
 };
