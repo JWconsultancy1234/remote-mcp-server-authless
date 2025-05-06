@@ -8,6 +8,22 @@
 	"main": "src/index.ts",
 	"compatibility_date": "2025-03-10",
 	"compatibility_flags": ["nodejs_compat"],
+
+ // Je Cloudflare-account ID (verplicht voor deploy)
+ "account_id": "J853409d357134adb66f14d403a8639a3",
+	
+// Laat toe om workers.dev URL te gebruiken (bv. remote-mcp-server-authless.<account>.workers.dev)
+  "workers_dev": true,
+
+// Secrets kan je via CLI injecteren (zie uitleg onderaan)
+	"env": {
+		"production": {
+		  "name": "remote-mcp-server-authless-prod"
+		}
+	  },
+
+// Durable object ondersteuning
+
 	"migrations": [
 		{
 			"new_sqlite_classes": ["MyMCP"],
@@ -22,6 +38,9 @@
 			}
 		]
 	},
+
+	// Optioneel: logging en observability
+
 	"observability": {
 		"enabled": true
 	}
