@@ -1,6 +1,5 @@
 // src/tools/invoices.ts
 import { z } from "zod";
-import { getInvoiceRequests, getInvoiceDetails } from "../bol-api";
 import { Env } from "../types";
 
 const GetInvoiceListParams = z.object({
@@ -24,13 +23,8 @@ export const invoicesTools = [
         description: 'Haalt een gepagineerde lijst van factuurverzoeken op van bol.com.',
         parameters: GetInvoiceListParams,
         execute: async (params: z.infer<typeof GetInvoiceListParams>, env: Env) => {
-            try {
-                const data = await getInvoiceRequests(env, params.page, params.shipmentId, params.state);
-                return { content: [{ type: 'json', json: data }] };
-            } catch (error: any) {
-                console.error('Error in getInvoiceList tool:', error);
-                return { content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van de factuurlijst: ${error.message || error}.` }] };
-            }
+            console.log("Mock execute for getInvoiceList:", params);
+            return { content: [{ type: 'json', json: { mock: true, params } }] };
         },
     },
     {
@@ -38,13 +32,8 @@ export const invoicesTools = [
         description: 'Haalt de gedetailleerde JSON specificatie op voor een specifieke bol.com factuur.',
         parameters: GetInvoiceDetailsParams,
         execute: async (params: z.infer<typeof GetInvoiceDetailsParams>, env: Env) => {
-            try {
-                const data = await getInvoiceDetails(env, params.invoiceId, params.page, 'application/vnd.retailer.v10+json');
-                return { content: [{ type: 'json', json: data }] };
-            } catch (error: any) {
-                console.error(`Error in getInvoiceDetails tool for ID ${params.invoiceId}:`, error);
-                return { content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van de factuurdetails voor ID ${params.invoiceId}: ${error.message || error}.` }] };
-            }
+            console.log("Mock execute for getInvoiceDetails:", params);
+            return { content: [{ type: 'json', json: { mock: true, params } }] };
         },
     },
 ];
