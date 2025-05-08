@@ -1,4 +1,4 @@
-// invoices.ts
+// src/tools/invoices.ts
 import { z } from "zod";
 import { getInvoiceRequests, getInvoiceDetails } from "../bol-api";
 import { Env } from "../types";
