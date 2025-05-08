@@ -39,4 +39,10 @@ export const ordersTools = [
                 return { content: [{ type: 'json', json: data }] };
             } catch (error: any) {
                 console.error('Error in getSingleOrder tool for Order ID', params.orderId, ':', error);
-                return { content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van order details voor Order ID ${params.orderId}: ${error
+                return { content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van order details voor Order ID ${params.orderId}: ${error.message}.` }] };
+            }
+        },
+    },
+];
+
+console.log("Exporting ordersTools:", ordersTools);
