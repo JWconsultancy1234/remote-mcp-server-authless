@@ -14,7 +14,8 @@ export interface Env {
     MCP_OBJECT: DurableObjectNamespace;
 }
 
-// Define the main MCP class
+type ToolExecute = (params: any, env: Env) => Promise<any>;
+
 export class MyMCP extends McpAgent {
     server = new McpServer({
         name: "Bol.com Retailer Tools",
@@ -30,12 +31,15 @@ export class MyMCP extends McpAgent {
     }
 
     private async _initOnce() {
-        if (this.initialized) return;
+        if (this.initialized) {
+            console.log("Already initialized, skipping.");
+            return;
+        }
         this.initialized = true;
+        console.log("Initializing MCP...");
         await this.init();
     }
 
-    // Initialize all tools
     async init() {
         const allTools = [
             ...invoicesTools,
@@ -44,40 +48,42 @@ export class MyMCP extends McpAgent {
             {
                 name: "getInvoiceSpecification",
                 parameters: z.object({ invoiceId: z.string(), page: z.number().optional() }),
-                execute: async ({ invoiceId, page }) => {
+                execute: async ({ invoiceId, page }, env: Env) => {
                     console.log("Executing getInvoiceSpecification with invoiceId:", invoiceId, "and page:", page);
-                    return { success: true }; // Example response
+                    return { success: true };
                 },
             },
         ];
 
         const registered = new Set<string>();
+        console.log("All tools to be processed:", JSON.stringify(allTools, null, 2));
 
-        // Debug: Log tools array and check its structure
-        console.log("All tools to be processed:", allTools);
-
-        // Ensure tools are registered only once
         const toolsToRegister = allTools.filter((tool) => !this.registeredTools.has(tool.name));
         console.log(`Tools to register: ${toolsToRegister.length}`);
 
         for (const tool of toolsToRegister) {
-            console.log('Tool being processed:', tool);
+            console.log("Tool being processed:", JSON.stringify(tool, null, 2));
 
-            // Log the tool structure
-            if (!tool.name || !tool.parameters || !tool.execute || typeof tool.execute !== 'function') {
+            // Validate tool structure
+            if (!tool.name || !tool.parameters || !tool.execute || typeof tool.execute !== "function") {
                 console.error(`Tool "${tool.name}" is missing required properties or execute is not a function. Skipping.`);
+                continue;
+            }
+
+            // Validate zod schema
+            if (!(tool.parameters instanceof z.ZodType)) {
+                console.error(`Tool "${tool.name}" has invalid parameters. Expected a zod schema, got:`, tool.parameters);
                 continue;
             }
 
             try {
                 console.log(`Registering tool: ${tool.name}`);
-                // Ensure tool is being passed correctly
-                await this.server.tool(tool.name, tool.parameters, tool.execute as unknown as (params: any, env: Env) => Promise<any>);
-                this.registeredTools.add(tool.name); // Mark this tool as registered
+                await this.server.tool(tool.name, tool.parameters, tool.execute as ToolExecute);
+                this.registeredTools.add(tool.name);
                 registered.add(tool.name);
-            } catch (err: any) {
+            } catch (err) {
                 console.error(`Error registering tool "${tool.name}":`, err);
-                console.error(`Tool details:`, tool);
+                console.error(`Tool details:`, JSON.stringify(tool, null, 2));
             }
         }
 
@@ -85,7 +91,6 @@ export class MyMCP extends McpAgent {
     }
 }
 
-// Default export for Cloudflare Worker
 export default {
     fetch(request: Request, env: Env, ctx: ExecutionContext) {
         const url = new URL(request.url);
