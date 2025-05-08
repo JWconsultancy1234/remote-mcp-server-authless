@@ -66,7 +66,7 @@ export class MyMCP extends McpAgent {
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
 
-
+}
 // Default export for Cloudflare Worker
 export default {
     fetch(request: Request, env: Env, ctx: ExecutionContext) {
