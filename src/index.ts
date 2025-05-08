@@ -41,6 +41,9 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
+        console.log("Imported invoicesTools:", invoicesTools); // Debug import
+        console.log("Imported commissionsTools:", commissionsTools);
+        console.log("Imported ordersTools:", ordersTools);
         const allTools = [
             ...invoicesTools,
             ...commissionsTools,
@@ -56,23 +59,40 @@ export class MyMCP extends McpAgent {
         ];
 
         const registered = new Set<string>();
-        console.log("All tools to be processed:", JSON.stringify(allTools, null, 2));
+        console.log("All tools to be processed (count):", allTools.length);
 
         const toolsToRegister = allTools.filter((tool) => !this.registeredTools.has(tool.name));
         console.log(`Tools to register: ${toolsToRegister.length}`);
 
         for (const tool of toolsToRegister) {
-            console.log("Tool being processed:", JSON.stringify(tool, null, 2));
+            // Log tool details safely
+            console.log("Tool being processed:", {
+                name: tool.name,
+                parametersShape: tool.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                hasExecute: !!tool.execute,
+                isExecuteFunction: typeof tool.execute === "function",
+            });
 
             // Validate tool structure
             if (!tool.name || !tool.parameters || !tool.execute || typeof tool.execute !== "function") {
-                console.error(`Tool "${tool.name}" is missing required properties or execute is not a function. Skipping.`);
+                console.error(`Tool "${tool.name}" is missing required properties or execute is not a function. Skipping.`, {
+                    name: tool.name,
+                    hasParameters: !!tool.parameters,
+                    hasExecute: !!tool.execute,
+                    isExecuteFunction: typeof tool.execute === "function",
+                });
                 continue;
             }
 
             // Validate zod schema
             if (!(tool.parameters instanceof z.ZodType)) {
                 console.error(`Tool "${tool.name}" has invalid parameters. Expected a zod schema, got:`, tool.parameters);
+                continue;
+            }
+
+            // Check for empty schema
+            if (tool.parameters._def.typeName === "ZodObject" && Object.keys(tool.parameters._def.shape()).length === 0) {
+                console.error(`Tool "${tool.name}" has an empty schema (z.object({})). This is likely incorrect.`);
                 continue;
             }
 
@@ -83,7 +103,11 @@ export class MyMCP extends McpAgent {
                 registered.add(tool.name);
             } catch (err) {
                 console.error(`Error registering tool "${tool.name}":`, err);
-                console.error(`Tool details:`, JSON.stringify(tool, null, 2));
+                console.error(`Tool details:`, {
+                    name: tool.name,
+                    parametersShape: tool.parameters._def.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                    hasExecute: !!tool.execute,
+                });
             }
         }
 
