@@ -1,3 +1,4 @@
+// src/index.ts
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
@@ -6,7 +7,6 @@ import { commissionsTools } from "./tools/commissions";
 import { ordersTools } from "./tools/orders";
 import { Env } from "./types";
 
-// Define Cloudflare Worker environment
 declare const DurableObjectState: any;
 
 type ToolExecute = (params: any, env: Env) => Promise<any>;
@@ -36,12 +36,10 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
-        // Debug raw imports
         console.log("Raw invoicesTools:", invoicesTools);
         console.log("Raw commissionsTools:", commissionsTools);
         console.log("Raw ordersTools:", ordersTools);
 
-        // Validate imports
         if (!invoicesTools || !Array.isArray(invoicesTools)) {
             console.error("invoicesTools is invalid or not an array:", invoicesTools);
         } else {
@@ -86,7 +84,6 @@ export class MyMCP extends McpAgent {
         console.log(`Tools to register: ${toolsToRegister.length}`);
 
         for (const tool of toolsToRegister) {
-            // Log tool details safely
             const parametersShape = tool.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown";
             console.log("Tool being processed:", {
                 name: tool.name,
@@ -95,7 +92,6 @@ export class MyMCP extends McpAgent {
                 isExecuteFunction: typeof tool.execute === "function",
             });
 
-            // Validate tool structure
             if (!tool.name || !tool.parameters || !tool.execute || typeof tool.execute !== "function") {
                 console.error(`Tool "${tool.name}" is missing required properties or execute is not a function. Skipping.`, {
                     name: tool.name,
@@ -106,13 +102,11 @@ export class MyMCP extends McpAgent {
                 continue;
             }
 
-            // Validate zod schema
             if (!(tool.parameters instanceof z.ZodType)) {
                 console.error(`Tool "${tool.name}" has invalid parameters. Expected a zod schema, got:`, tool.parameters);
                 continue;
             }
 
-            // Check for empty schema
             if (tool.parameters._def.typeName === "ZodObject" && Object.keys(tool.parameters._def.shape()).length === 0) {
                 console.error(`Tool "${tool.name}" has an empty schema (z.object({})). This is likely incorrect.`);
                 continue;
