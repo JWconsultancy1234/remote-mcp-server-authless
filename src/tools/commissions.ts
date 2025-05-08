@@ -19,6 +19,11 @@ const GetCommissionsBulkParams = z.object({
     products: z.array(ProductBulkItem).min(1).max(100).describe('Een verplichte lijst van minimaal 1 en maximaal 100 producten, elk gespecificeerd met EAN, unitPrice en optionele condition. De API berekent commissies voor elk product in deze lijst.'),
 });
 
+// Log schema shapes
+console.log("GetCommissionSingleParams shape:", Object.keys(GetCommissionSingleParams._def.shape()));
+console.log("ProductBulkItem shape:", Object.keys(ProductBulkItem._def.shape()));
+console.log("GetCommissionsBulkParams shape:", Object.keys(GetCommissionsBulkParams._def.shape()));
+
 export const commissionsTools = [
     {
         name: 'getCommissionSingle',
@@ -40,14 +45,7 @@ export const commissionsTools = [
         parameters: GetCommissionsBulkParams,
         execute: async (params: z.infer<typeof GetCommissionsBulkParams>, env: Env) => {
             try {
-                const requestBody = {
-                    products: params.products.map(product => ({
-                        ean: product.ean,
-                        unitPrice: product.unitPrice,
-                        ...(product.condition && { condition: product.condition }),
-                    })),
-                };
-                const data = await postCommissionsBulk(env, requestBody);
+                const data = await postCommissionsBulk(env, params.products);
                 return { content: [{ type: 'json', json: data }] };
             } catch (error: any) {
                 console.error('Error in getCommissionsBulk tool:', error);
@@ -57,4 +55,8 @@ export const commissionsTools = [
     },
 ];
 
-console.log("Exporting commissionsTools:", commissionsTools);
+console.log("Exporting commissionsTools:", JSON.stringify(commissionsTools.map(t => ({
+    name: t.name,
+    parametersShape: t.parameters?._def?.typeName === "ZodObject" ? Object.keys(t.parameters._def.shape()) : "unknown",
+    hasExecute: !!t.execute,
+})), null, 2));
