@@ -14,6 +14,10 @@ const GetSingleOrderParams = z.object({
     orderId: z.string().describe('Het verplichte ID van de order die opgehaald moet worden.'),
 });
 
+// Log schema shapes
+console.log("GetOrdersListParams shape:", Object.keys(GetOrdersListParams._def.shape()));
+console.log("GetSingleOrderParams shape:", Object.keys(GetSingleOrderParams._def.shape()));
+
 export const ordersTools = [
     {
         name: 'getOrdersList',
@@ -45,4 +49,8 @@ export const ordersTools = [
     },
 ];
 
-console.log("Exporting ordersTools:", ordersTools);
+console.log("Exporting ordersTools:", JSON.stringify(ordersTools.map(t => ({
+    name: t.name,
+    parametersShape: t.parameters?._def?.typeName === "ZodObject" ? Object.keys(t.parameters._def.shape()) : "unknown",
+    hasExecute: !!t.execute,
+})), null, 2));
