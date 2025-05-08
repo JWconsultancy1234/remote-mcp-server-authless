@@ -36,6 +36,14 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
+        // Fetch the API token first
+        const token = await this.state.storage.get('bolcom_token');
+        if (!token) {
+            console.error("API token is missing or invalid.");
+            return; // If token is missing, do not proceed with tool registration
+        }
+        console.log("API token retrieved successfully.");
+
         // Detailed logging of tool arrays
         console.log("Raw invoicesTools:", JSON.stringify(invoicesTools, null, 2));
         console.log("Raw commissionsTools:", JSON.stringify(commissionsTools, null, 2));
