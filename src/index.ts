@@ -14,9 +14,31 @@ export interface Env {
     MCP_OBJECT: DurableObjectNamespace;
 }
 
-const MyMCP = {
-    server: new McpServer(),
-    
+// Define the main MCP class
+export class MyMCP extends McpAgent {
+    server = new McpServer({
+        name: "Bol.com Retailer Tools",
+        version: "1.0",
+    });
+
+    private initialized = false;
+
+    constructor(state: DurableObjectState, env: Env) {
+        super(state, env);
+
+        // Defer init to avoid redundant re-runs
+        this._initOnce();
+    }
+
+    // Run initialization logic only once
+    private async _initOnce() {
+        if (this.initialized) return;
+        this.initialized = true;
+
+        await this.init(); // Safe to run once
+    }
+
+    // Initialize all tools
     async init() {
         const allTools = [
             ...invoicesTools,
@@ -39,7 +61,7 @@ const MyMCP = {
                 continue;
             }
             try {
-                MyMCP.server.tool(tool.name, tool.parameters, tool.execute as any);
+                this.server.tool(tool.name, tool.parameters, tool.execute as any);
                 registered.add(tool.name);
             } catch (err: any) {
                 console.error(`Failed to register tool "${tool.name}": ${err.message}`);
@@ -48,26 +70,22 @@ const MyMCP = {
 
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
-};
 
+// Default export to handle requests
 export default {
-    async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-        const url = new URL(request.url);
+	fetch(request: Request, env: Env, ctx: ExecutionContext) {
+		const url = new URL(request.url);
 
-        if (!MyMCP.server) {
-            await MyMCP.init();
-        }
+		if (url.pathname === "/sse" || url.pathname === "/sse/message") {
+			// @ts-ignore
+			return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
+		}
 
-        if (url.pathname === "/sse" || url.pathname === "/sse/message") {
-            // @ts-ignore
-            return MyMCP.server.serveSSE("/sse").fetch(request, env, ctx);
-        }
+		if (url.pathname === "/mcp") {
+			// @ts-ignore
+			return MyMCP.serve("/mcp").fetch(request, env, ctx);
+		}
 
-        if (url.pathname === "/mcp") {
-            // @ts-ignore
-            return MyMCP.server.serve("/mcp").fetch(request, env, ctx);
-        }
-
-        return new Response("Not found", { status: 404 });
-    },
+		return new Response("Not found", { status: 404 });
+	},
 };
