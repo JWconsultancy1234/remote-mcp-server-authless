@@ -22,6 +22,7 @@ export class MyMCP extends McpAgent {
     });
 
     private initialized = false;
+    private registeredTools = new Set<string>();
 
     constructor(state: DurableObjectState, env: Env) {
         super(state, env);
@@ -61,7 +62,8 @@ export class MyMCP extends McpAgent {
                 continue;
             }
 
-            if (registered.has(tool.name)) {
+            // Check if the tool is already registered
+            if (this.registeredTools.has(tool.name)) {
                 console.warn(`Tool "${tool.name}" is already registered, skipping.`);
                 continue;
             }
@@ -69,6 +71,7 @@ export class MyMCP extends McpAgent {
             try {
                 console.log(`Registering tool: ${tool.name}`);
                 this.server.tool(tool.name, tool.parameters, tool.execute as unknown as (params: any, env: Env) => Promise<any>);
+                this.registeredTools.add(tool.name); // Mark this tool as registered
                 registered.add(tool.name);
             } catch (err: any) {
                 console.error(`Error registering tool "${tool.name}":`, err);
