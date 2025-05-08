@@ -30,9 +30,9 @@ export class MyMCP extends McpAgent {
     }
 
     private async _initOnce() {
-        if (this.initialized) return;
+        if (this.initialized) return; // Prevent re-initialization
         this.initialized = true;
-        await this.init();
+        await this.init(); // Call init() only once
     }
 
     // Initialize all tools
