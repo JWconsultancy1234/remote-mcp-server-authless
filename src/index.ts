@@ -25,20 +25,15 @@ export class MyMCP extends McpAgent {
 
     constructor(state: DurableObjectState, env: Env) {
         super(state, env);
-
-        // Defer init to avoid redundant re-runs
         this._initOnce();
     }
 
-    // Run initialization logic only once
     private async _initOnce() {
         if (this.initialized) return;
         this.initialized = true;
-
-        await this.init(); // Safe to run once
+        await this.init();
     }
 
-    // Initialize all tools
     async init() {
         const allTools = [
             ...invoicesTools,
@@ -71,22 +66,37 @@ export class MyMCP extends McpAgent {
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
 
-// Default export to handle requests
-	
+    // Serve method for HTTP handling
+    static serve(path: string) {
+        return {
+            async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+                const state = await env.MCP_OBJECT.get(env.MCP_OBJECT.idFromName("singleton"));
+                const obj = await state.get(env.MCP_OBJECT);
+                const mcp = new MyMCP(state, env);
+                return mcp.server.fetch(request);
+            },
+        };
+    }
+
+    // Serve SSE (if different implementation is needed)
+    static serveSSE(path: string) {
+        return MyMCP.serve(path); // for now reuse same logic
+    }
+}
+
+// Default export for Cloudflare Worker
 export default {
-	fetch(request: Request, env: Env, ctx: ExecutionContext) {
-		const url = new URL(request.url);
+    fetch(request: Request, env: Env, ctx: ExecutionContext) {
+        const url = new URL(request.url);
 
-		if (url.pathname === "/sse" || url.pathname === "/sse/message") {
-			// @ts-ignore
-			return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
-		}
+        if (url.pathname === "/sse" || url.pathname === "/sse/message") {
+            return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
+        }
 
-		if (url.pathname === "/mcp") {
-			// @ts-ignore
-			return MyMCP.serve("/mcp").fetch(request, env, ctx);
-		}
+        if (url.pathname === "/mcp") {
+            return MyMCP.serve("/mcp").fetch(request, env, ctx);
+        }
 
-		return new Response("Not found", { status: 404 });
-	},
+        return new Response("Not found", { status: 404 });
+    },
 };
