@@ -104,7 +104,6 @@ export class MyMCP extends McpAgent {
         const registered = new Set<string>();
         console.log("All tools to be processed (count):", allTools.length);
 
-        // Filter tools to register that are not already in registeredTools
         const toolsToRegister = allTools.filter((tool) => !this.registeredTools.has(tool.name));
         console.log(`Tools to register: ${toolsToRegister.length}`);
 
@@ -141,8 +140,8 @@ export class MyMCP extends McpAgent {
             try {
                 console.log(`Registering tool: ${tool.name}`);
                 await this.server.tool(tool.name, tool.parameters, tool.execute as ToolExecute);
-                this.registeredTools.add(tool.name);  // Register tool after successful registration
-                registered.add(tool.name);  // Track successfully registered tool locally
+                this.registeredTools.add(tool.name);
+                registered.add(tool.name);
             } catch (err) {
                 console.error(`Error registering tool "${tool.name}":`, err);
                 console.error(`Tool details:`, {
