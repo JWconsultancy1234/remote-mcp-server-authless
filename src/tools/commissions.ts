@@ -29,12 +29,12 @@ const GetCommissionsBulkParams = z.object({
 export const commissionsTools = [
     {
         name: 'getCommissionSingle',
-        description: 'Haalt gedetailleerde commissie- en reductie-informatie op voor een enkel product door het EAN, de verkoopprijs en optioneel de conditie op te geven. Dit is nuttig voor het berekenen van de variabele kosten per specifiek productoffer.', // Beschrijving gebaseerd op [1, 3, 4]
+        description: 'Haalt gedetailleerde commissie- en reductie-informatie op voor een enkel product door het EAN, de verkoopprijs en optioneel de conditie op te geven. Dit is nuttig voor het berekenen van de variabele kosten per specifiek productoffer.',
         parameters: GetCommissionSingleParams,
-        execute: async ({ params, env }: { params: z.infer<typeof GetCommissionSingleParams>, env: Env }) => {
+        execute: async (params: z.infer<typeof GetCommissionSingleParams>, env: Env) => {
             try {
                 // Roep de helper functie aan voor het enkele EAN endpoint
-                // De API verwacht 'unit-price' als query parameter [4]
+                // De API verwacht 'unit-price' als query parameter
                 const data = await getCommissionSingle(env, params.ean, params.unitPrice, params.condition);
 
                 // Retourneer de data als JSON voor de AI om te analyseren
@@ -52,18 +52,16 @@ export const commissionsTools = [
     },
     {
         name: 'getCommissionsBulk',
-        description: 'Haalt commissie- en reductie-informatie op voor een lijst van producten in bulk (maximaal 100). Dit is een BETA endpoint en kan gedeeltelijke resultaten retourneren (207 Multi-Status). Ideaal voor batchverwerking en analyse van winstgevendheid over een assortiment.', // Beschrijving gebaseerd op [2, 5, 6]
+        description: 'Haalt commissie- en reductie-informatie op voor een lijst van producten in bulk (maximaal 100). Dit is een BETA endpoint en kan gedeeltelijke resultaten retourneren (207 Multi-Status). Ideaal voor batchverwerking en analyse van winstgevendheid over een assortiment.',
         parameters: GetCommissionsBulkParams,
-        execute: async ({ params, env }: { params: z.infer<typeof GetCommissionsBulkParams>, env: Env }) => {
+        execute: async (params: z.infer<typeof GetCommissionsBulkParams>, env: Env) => {
             try {
-                // De helper functie moet de request body in het verwachte formaat krijgen [2, 5]
+                // De helper functie moet de request body in het verwachte formaat krijgen
                 // Het formaat is { "products": [ { "ean": "...", "unitPrice": ..., "condition": "..." }, ... ] }
                 const requestBody = {
                     products: params.products.map(product => ({
                         ean: product.ean,
                         unitPrice: product.unitPrice,
-                        // De API documentatie [4, 5] geeft enums voor condition.
-                        // Alleen toevoegen als de AI een specifieke conditie heeft meegegeven, anders gebruikt de API de default ('NEW').
                         ...(product.condition && { condition: product.condition }),
                     }))
                 };
@@ -71,14 +69,13 @@ export const commissionsTools = [
                 // Roep de helper functie aan voor het bulk/BETA endpoint
                 const data = await postCommissionsBulk(env, requestBody);
 
-                // De API kan 207 Multi-status retourneren [5]. Retourneer de volledige JSON response.
+                // De API kan 207 Multi-status retourneren
                 return {
                     content: [{ type: 'json', json: data }]
                 };
             } catch (error: any) {
                 // Handel fouten af
                 console.error('Error in getCommissionsBulk tool:', error);
-                 // Geef een generiekere foutmelding omdat het om een bulkverzoek gaat
                 return {
                     content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van commissie details in bulk: ${error.message}.` }]
                 };
