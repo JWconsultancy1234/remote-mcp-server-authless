@@ -81,19 +81,19 @@ export class MyMCP extends McpAgent {
                 continue;
             }
 
-            // Validate zod schema before accessing _def
+            // Validate zod schema
             if (!(tool.parameters instanceof z.ZodType)) {
                 console.error(`Tool "${tool.name}" has invalid parameters. Expected a zod schema, got:`, tool.parameters);
                 continue;
             }
 
+            // Check if schema is empty
+            const schemaDef = tool.parameters._def;
+            if (schemaDef.typeName === "ZodObject" && Object.keys(schemaDef.shape()).length === 0) {
+                console.warn(`Tool "${tool.name}" has an empty schema (z.object({})). This may cause issues.`);
+            }
+
             try {
-                const schemaDef = tool.parameters._def;
-
-                if (schemaDef.typeName === "ZodObject" && Object.keys(schemaDef.shape()).length === 0) {
-                    console.warn(`Tool "${tool.name}" has an empty schema (z.object({})). This may cause issues.`);
-                }
-
                 console.log(`Registering tool: ${tool.name}`);
                 await this.server.tool(tool.name, tool.parameters, tool.execute as ToolExecute);
                 this.registeredTools.add(tool.name);
