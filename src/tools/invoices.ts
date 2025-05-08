@@ -14,6 +14,10 @@ const GetInvoiceDetailsParams = z.object({
     page: z.number().int().positive().default(1).describe('Het paginanummer voor de lijst van transacties binnen de factuurspecificatie (>= 1).'),
 });
 
+// Log schema shapes
+console.log("GetInvoiceListParams shape:", Object.keys(GetInvoiceListParams._def.shape()));
+console.log("GetInvoiceDetailsParams shape:", Object.keys(GetInvoiceDetailsParams._def.shape()));
+
 export const invoicesTools = [
     {
         name: 'getInvoiceList',
@@ -45,4 +49,8 @@ export const invoicesTools = [
     },
 ];
 
-console.log("Exporting invoicesTools:", invoicesTools);
+console.log("Exporting invoicesTools:", JSON.stringify(invoicesTools.map(t => ({
+    name: t.name,
+    parametersShape: t.parameters?._def?.typeName === "ZodObject" ? Object.keys(t.parameters._def.shape()) : "unknown",
+    hasExecute: !!t.execute,
+})), null, 2));
