@@ -27,7 +27,7 @@ console.log("GetCommissionsBulkParams shape:", Object.keys(GetCommissionsBulkPar
 export const commissionsTools = [
     {
         name: 'getCommissionSingle',
-        description: 'Haalt gedetailleerde commissie- en reductie-informatie op voor een enkel product...',
+        description: 'Haalt gedetailleerde commissie- en reductie-informatie op voor een enkel product.',
         parameters: GetCommissionSingleParams,
         execute: async (params: z.infer<typeof GetCommissionSingleParams>, env: Env) => {
             try {
@@ -41,7 +41,7 @@ export const commissionsTools = [
     },
     {
         name: 'getCommissionsBulk',
-        description: 'Haalt commissie- en reductie-informatie op voor een lijst van producten in bulk...',
+        description: 'Haalt commissie- en reductie-informatie op voor een lijst van producten in bulk.',
         parameters: GetCommissionsBulkParams,
         execute: async (params: z.infer<typeof GetCommissionsBulkParams>, env: Env) => {
             try {
