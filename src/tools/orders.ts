@@ -21,7 +21,7 @@ console.log("GetSingleOrderParams shape:", Object.keys(GetSingleOrderParams._def
 export const ordersTools = [
     {
         name: 'getOrdersList',
-        description: 'Haalt een gepagineerde lijst van orders op...',
+        description: 'Haalt een gepagineerde lijst van orders op.',
         parameters: GetOrdersListParams,
         execute: async (params: z.infer<typeof GetOrdersListParams>, env: Env) => {
             try {
@@ -35,7 +35,7 @@ export const ordersTools = [
     },
     {
         name: 'getSingleOrder',
-        description: 'Haalt gedetailleerde informatie op voor een specifieke order...',
+        description: 'Haalt gedetailleerde informatie op voor een specifieke order.',
         parameters: GetSingleOrderParams,
         execute: async (params: z.infer<typeof GetSingleOrderParams>, env: Env) => {
             try {
