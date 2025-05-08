@@ -21,7 +21,7 @@ console.log("GetInvoiceDetailsParams shape:", Object.keys(GetInvoiceDetailsParam
 export const invoicesTools = [
     {
         name: 'getInvoiceList',
-        description: 'Haalt een gepagineerde lijst van factuurverzoeken op van bol.com...',
+        description: 'Haalt een gepagineerde lijst van factuurverzoeken op van bol.com.',
         parameters: GetInvoiceListParams,
         execute: async (params: z.infer<typeof GetInvoiceListParams>, env: Env) => {
             try {
@@ -35,7 +35,7 @@ export const invoicesTools = [
     },
     {
         name: 'getInvoiceDetails',
-        description: 'Haalt de gedetailleerde JSON specificatie op voor een specifieke bol.com factuur...',
+        description: 'Haalt de gedetailleerde JSON specificatie op voor een specifieke bol.com factuur.',
         parameters: GetInvoiceDetailsParams,
         execute: async (params: z.infer<typeof GetInvoiceDetailsParams>, env: Env) => {
             try {
