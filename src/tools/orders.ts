@@ -1,17 +1,17 @@
-// orders.ts
+// src/tools/orders.ts
 import { z } from "zod";
 import { getOrdersList, getSingleOrder } from "../bol-api";
 import { Env } from "../types";
 
 const GetOrdersListParams = z.object({
-    page: z.number().int().positive().optional().describe('...'),
-    fulfilmentMethod: z.enum(['FBR', 'FBB', 'ALL']).optional().describe('...'),
-    status: z.enum(['OPEN', 'SHIPPED', 'ALL']).optional().describe('...'),
-    latestChangeDate: z.string().optional().describe('...'),
+    page: z.number().int().positive().optional().describe('Het paginanummer van de lijst met orders. Standaard is 1.'),
+    fulfilmentMethod: z.enum(['FBR', 'FBB', 'ALL']).optional().describe('Filter orders op fulfillment methode. "FBR" voor Fulfilled by the Retailer, "FBB" voor Fulfilled by bol.com, "ALL" voor beide. Standaard is FBR, maar "ALL" kan nuttig zijn voor BI.'),
+    status: z.enum(['OPEN', 'SHIPPED', 'ALL']).optional().describe('Filter orders op status. "OPEN" voor openstaande orders, "SHIPPED" voor verzonden orders, "ALL" voor alle statussen. Standaard is OPEN.'),
+    latestChangeDate: z.string().optional().describe('Filter orders op laatste wijzigingsdatum (YYYY-MM-DD).'),
 });
 
 const GetSingleOrderParams = z.object({
-    orderId: z.string().describe('...'),
+    orderId: z.string().describe('Het verplichte ID van de order die opgehaald moet worden.'),
 });
 
 export const ordersTools = [
@@ -39,10 +39,4 @@ export const ordersTools = [
                 return { content: [{ type: 'json', json: data }] };
             } catch (error: any) {
                 console.error('Error in getSingleOrder tool for Order ID', params.orderId, ':', error);
-                return { content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van order details voor Order ID ${params.orderId}: ${error.message}.` }] };
-            }
-        },
-    },
-];
-
-console.log("Exporting ordersTools:", ordersTools);
+                return { content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van order details voor Order ID ${params.orderId}: ${error
