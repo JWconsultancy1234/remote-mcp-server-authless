@@ -78,6 +78,7 @@ export class MyMCP extends McpAgent {
         };
     }
 
+    
     // Serve SSE (if different implementation is needed)
     static serveSSE(path: string) {
         return MyMCP.serve(path); // for now reuse same logic
