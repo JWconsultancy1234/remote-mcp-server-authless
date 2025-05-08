@@ -129,6 +129,29 @@ export class MyMCP extends McpAgent {
 
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
+
+    // Add routes for token storage
+    async fetch(request: Request): Promise<Response> {
+        const url = new URL(request.url);
+
+        if (url.pathname === '/get-token') {
+            const token = await this.state.storage.get('bolcom_token');
+            if (!token) {
+                return new Response('Token not found', { status: 404 });
+            }
+            return new Response(JSON.stringify(token), {
+                headers: { 'Content-Type': 'application/json' },
+            });
+        }
+
+        if (url.pathname === '/save-token' && request.method === 'POST') {
+            const token = await request.json();
+            await this.state.storage.put('bolcom_token', token);
+            return new Response('Token saved', { status: 200 });
+        }
+
+        return super.fetch(request);
+    }
 }
 
 export default {
