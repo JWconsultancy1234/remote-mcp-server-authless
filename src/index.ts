@@ -36,46 +36,57 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
-        // 1. Check if API token exists and is valid
-        const token = await this.state.storage.get('bolcom_token');
-        if (!token) {
-            console.error("API token is missing or invalid.");
-            return; // Stop initialization if the token is not found
-        }
-
-        try {
-            // 2. Test API connectivity
-            const response = await fetch('API_URL', {
-                method: 'GET',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                },
-            });
-            
-            if (!response.ok) {
-                console.error(`API call failed: ${response.statusText}`);
-                return; // Stop initialization if the API call fails
-            }
-
-            const data = await response.json();
-            console.log('API is working:', data);
-
-        } catch (error) {
-            console.error('Error connecting to API:', error);
-            return; // Stop initialization if the API is unreachable
-        }
-
-        // 3. Log raw tool arrays (for debugging)
+        // Detailed logging of tool arrays
         console.log("Raw invoicesTools:", JSON.stringify(invoicesTools, null, 2));
         console.log("Raw commissionsTools:", JSON.stringify(commissionsTools, null, 2));
         console.log("Raw ordersTools:", JSON.stringify(ordersTools, null, 2));
 
-        // 4. Check for valid tools and log details
-        this._logTools(invoicesTools, 'invoicesTools');
-        this._logTools(commissionsTools, 'commissionsTools');
-        this._logTools(ordersTools, 'ordersTools');
+        if (!invoicesTools || !Array.isArray(invoicesTools)) {
+            console.error("invoicesTools is invalid or not an array:", invoicesTools);
+        } else {
+            console.log("invoicesTools length:", invoicesTools.length);
+            invoicesTools.forEach((tool, index) => {
+                console.log(`invoicesTools[${index}]:`, {
+                    name: tool?.name,
+                    parameters: tool?.parameters?._def?.typeName || "undefined",
+                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                    hasExecute: !!tool?.execute,
+                    isExecuteFunction: typeof tool?.execute === "function",
+                });
+            });
+        }
 
-        // 5. Clone tools to prevent mutation
+        if (!commissionsTools || !Array.isArray(commissionsTools)) {
+            console.error("commissionsTools is invalid or not an array:", commissionsTools);
+        } else {
+            console.log("commissionsTools length:", commissionsTools.length);
+            commissionsTools.forEach((tool, index) => {
+                console.log(`commissionsTools[${index}]:`, {
+                    name: tool?.name,
+                    parameters: tool?.parameters?._def?.typeName || "undefined",
+                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                    hasExecute: !!tool?.execute,
+                    isExecuteFunction: typeof tool?.execute === "function",
+                });
+            });
+        }
+
+        if (!ordersTools || !Array.isArray(ordersTools)) {
+            console.error("ordersTools is invalid or not an array:", ordersTools);
+        } else {
+            console.log("ordersTools length:", ordersTools.length);
+            ordersTools.forEach((tool, index) => {
+                console.log(`ordersTools[${index}]:`, {
+                    name: tool?.name,
+                    parameters: tool?.parameters?._def?.typeName || "undefined",
+                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                    hasExecute: !!tool?.execute,
+                    isExecuteFunction: typeof tool?.execute === "function",
+                });
+            });
+        }
+
+        // Clone tools to prevent mutation
         const allTools = [
             ...(Array.isArray(invoicesTools) ? invoicesTools.map(tool => ({ ...tool })) : []),
             ...(Array.isArray(commissionsTools) ? commissionsTools.map(tool => ({ ...tool })) : []),
@@ -93,7 +104,6 @@ export class MyMCP extends McpAgent {
         const registered = new Set<string>();
         console.log("All tools to be processed (count):", allTools.length);
 
-        // 6. Register tools
         const toolsToRegister = allTools.filter((tool) => !this.registeredTools.has(tool.name));
         console.log(`Tools to register: ${toolsToRegister.length}`);
 
@@ -143,23 +153,6 @@ export class MyMCP extends McpAgent {
         }
 
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
-    }
-
-    private _logTools(tools: any[], toolType: string) {
-        if (!tools || !Array.isArray(tools)) {
-            console.error(`${toolType} is invalid or not an array:`, tools);
-        } else {
-            console.log(`${toolType} length:`, tools.length);
-            tools.forEach((tool, index) => {
-                console.log(`${toolType}[${index}]:`, {
-                    name: tool?.name,
-                    parameters: tool?.parameters?._def?.typeName || "undefined",
-                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
-                    hasExecute: !!tool?.execute,
-                    isExecuteFunction: typeof tool?.execute === "function",
-                });
-            });
-        }
     }
 
     async fetch(request: Request): Promise<Response> {
