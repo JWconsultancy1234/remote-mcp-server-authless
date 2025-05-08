@@ -2,10 +2,10 @@
 import { McpAgent } from "agents/mcp";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
+import { Env } from "./types";
 import { invoicesTools } from "./tools/invoices";
 import { commissionsTools } from "./tools/commissions";
 import { ordersTools } from "./tools/orders";
-import { Env } from "./types";
 
 declare const DurableObjectState: any;
 
@@ -36,74 +36,67 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
-        // Detailed logging of tool arrays
+        const allTools = [
+            ...invoicesTools,
+            ...commissionsTools,
+            ...ordersTools,
+        ];
+
         console.log("Raw invoicesTools:", JSON.stringify(invoicesTools, null, 2));
         console.log("Raw commissionsTools:", JSON.stringify(commissionsTools, null, 2));
         console.log("Raw ordersTools:", JSON.stringify(ordersTools, null, 2));
 
-        if (!invoicesTools || !Array.isArray(invoicesTools)) {
-            console.error("invoicesTools is invalid or not an array:", invoicesTools);
-        } else {
-            console.log("invoicesTools length:", invoicesTools.length);
-            invoicesTools.forEach((tool, index) => {
-                console.log(`invoicesTools[${index}]:`, {
-                    name: tool?.name,
-                    parameters: tool?.parameters?._def?.typeName || "undefined",
-                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
-                    hasExecute: !!tool?.execute,
-                    isExecuteFunction: typeof tool?.execute === "function",
-                });
-            });
-        }
+        console.log("invoicesTools length:", invoicesTools.length);
+        console.log("invoicesTools[0]:", JSON.stringify({
+            name: invoicesTools[0]?.name,
+            parameters: invoicesTools[0]?.parameters?._def?.typeName,
+            parametersShape: invoicesTools[0]?.parameters?._def?.typeName === "ZodObject" ? Object.keys(invoicesTools[0].parameters._def.shape()) : "unknown",
+            hasExecute: !!invoicesTools[0]?.execute,
+            isExecuteFunction: typeof invoicesTools[0]?.execute === "function",
+        }, null, 2));
+        console.log("invoicesTools[1]:", JSON.stringify({
+            name: invoicesTools[1]?.name,
+            parameters: invoicesTools[1]?.parameters?._def?.typeName,
+            parametersShape: invoicesTools[1]?.parameters?._def?.typeName === "ZodObject" ? Object.keys(invoicesTools[1].parameters._def.shape()) : "unknown",
+            hasExecute: !!invoicesTools[1]?.execute,
+            isExecuteFunction: typeof invoicesTools[1]?.execute === "function",
+        }, null, 2));
 
-        if (!commissionsTools || !Array.isArray(commissionsTools)) {
-            console.error("commissionsTools is invalid or not an array:", commissionsTools);
-        } else {
-            console.log("commissionsTools length:", commissionsTools.length);
-            commissionsTools.forEach((tool, index) => {
-                console.log(`commissionsTools[${index}]:`, {
-                    name: tool?.name,
-                    parameters: tool?.parameters?._def?.typeName || "undefined",
-                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
-                    hasExecute: !!tool?.execute,
-                    isExecuteFunction: typeof tool?.execute === "function",
-                });
-            });
-        }
+        console.log("commissionsTools length:", commissionsTools.length);
+        console.log("commissionsTools[0]:", JSON.stringify({
+            name: commissionsTools[0]?.name,
+            parameters: commissionsTools[0]?.parameters?._def?.typeName,
+            parametersShape: commissionsTools[0]?.parameters?._def?.typeName === "ZodObject" ? Object.keys(commissionsTools[0].parameters._def.shape()) : "unknown",
+            hasExecute: !!commissionsTools[0]?.execute,
+            isExecuteFunction: typeof commissionsTools[0]?.execute === "function",
+        }, null, 2));
+        console.log("commissionsTools[1]:", JSON.stringify({
+            name: commissionsTools[1]?.name,
+            parameters: commissionsTools[1]?.parameters?._def?.typeName,
+            parametersShape: commissionsTools[1]?.parameters?._def?.typeName === "ZodObject" ? Object.keys(commissionsTools[1].parameters._def.shape()) : "unknown",
+            hasExecute: !!commissionsTools[1]?.execute,
+            isExecuteFunction: typeof commissionsTools[1]?.execute === "function",
+        }, null, 2));
 
-        if (!ordersTools || !Array.isArray(ordersTools)) {
-            console.error("ordersTools is invalid or not an array:", ordersTools);
-        } else {
-            console.log("ordersTools length:", ordersTools.length);
-            ordersTools.forEach((tool, index) => {
-                console.log(`ordersTools[${index}]:`, {
-                    name: tool?.name,
-                    parameters: tool?.parameters?._def?.typeName || "undefined",
-                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
-                    hasExecute: !!tool?.execute,
-                    isExecuteFunction: typeof tool?.execute === "function",
-                });
-            });
-        }
+        console.log("ordersTools length:", ordersTools.length);
+        console.log("ordersTools[0]:", JSON.stringify({
+            name: ordersTools[0]?.name,
+            parameters: ordersTools[0]?.parameters?._def?.typeName,
+            parametersShape: ordersTools[0]?.parameters?._def?.typeName === "ZodObject" ? Object.keys(ordersTools[0].parameters._def.shape()) : "unknown",
+            hasExecute: !!ordersTools[0]?.execute,
+            isExecuteFunction: typeof ordersTools[0]?.execute === "function",
+        }, null, 2));
+        console.log("ordersTools[1]:", JSON.stringify({
+            name: ordersTools[1]?.name,
+            parameters: ordersTools[1]?.parameters?._def?.typeName,
+            parametersShape: ordersTools[1]?.parameters?._def?.typeName === "ZodObject" ? Object.keys(ordersTools[1].parameters._def.shape()) : "unknown",
+            hasExecute: !!ordersTools[1]?.execute,
+            isExecuteFunction: typeof ordersTools[1]?.execute === "function",
+        }, null, 2));
 
-        // Clone tools to prevent mutation
-        const allTools = [
-            ...(Array.isArray(invoicesTools) ? invoicesTools.map(tool => ({ ...tool })) : []),
-            ...(Array.isArray(commissionsTools) ? commissionsTools.map(tool => ({ ...tool })) : []),
-            ...(Array.isArray(ordersTools) ? ordersTools.map(tool => ({ ...tool })) : []),
-            {
-                name: "getInvoiceSpecification",
-                parameters: z.object({ invoiceId: z.string(), page: z.number().optional() }),
-                execute: async ({ invoiceId, page }, env: Env) => {
-                    console.log("Executing getInvoiceSpecification with invoiceId:", invoiceId, "and page:", page);
-                    return { success: true };
-                },
-            },
-        ];
-
-        const registered = new Set<string>();
         console.log("All tools to be processed (count):", allTools.length);
 
+        const registered = new Set<string>();
         const toolsToRegister = allTools.filter((tool) => !this.registeredTools.has(tool.name));
         console.log(`Tools to register: ${toolsToRegister.length}`);
 
@@ -129,11 +122,6 @@ export class MyMCP extends McpAgent {
 
             if (!(tool.parameters instanceof z.ZodType)) {
                 console.error(`Tool "${tool.name}" has invalid parameters. Expected a zod schema, got:`, tool.parameters);
-                continue;
-            }
-
-            if (tool.parameters._def.typeName === "ZodObject" && Object.keys(tool.parameters._def.shape()).length === 0) {
-                console.error(`Tool "${tool.name}" has an empty schema (z.object({})). This is likely incorrect.`);
                 continue;
             }
 
