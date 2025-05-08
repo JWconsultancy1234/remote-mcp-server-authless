@@ -24,24 +24,20 @@ export const invoicesTools = [
         name: 'getInvoiceList',
         description: 'Haalt een gepagineerde lijst van factuurverzoeken op van bol.com. Kan gefilterd worden op pagina, shipment ID en status.',
         parameters: GetInvoiceListParams,
-        execute: async ({ params, env }: { params: z.infer<typeof GetInvoiceListParams>, env: Env }) => {
-            try {
-                // Roep de helper functie aan uit bol-api.ts
-                const data = await getInvoiceRequests(env, params.page, params.shipmentId, params.state);
+        execute: execute: async (params: z.infer<typeof GetInvoiceListParams>, env: Env) => {
+    try {
+        const data = await getInvoiceRequests(env, params.page, params.shipmentId, params.state);
+        return {
+            content: [{ type: 'json', json: data }],
+        };
+    } catch (error: any) {
+        console.error('Error in getInvoiceList tool:', error);
+        return {
+            content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van de factuurlijst: ${error.message}.` }],
+        };
+    }
+},
 
-                // Retourneer de data in een formaat dat de AI kan verwerken
-                // Gebruik type 'json' voor gestructureerde data zoals aanbevolen door MCP [3]
-                return {
-                    content: [{ type: 'json', json: data }]
-                };
-            } catch (error: any) {
-                // Handel API of andere fouten af en retourneer een tekstbericht aan de AI
-                console.error('Error in getInvoiceList tool:', error);
-                return {
-                    content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van de factuurlijst: ${error.message}.` }]
-                };
-            }
-        },
     },
     {
         name: 'getInvoiceDetails',
