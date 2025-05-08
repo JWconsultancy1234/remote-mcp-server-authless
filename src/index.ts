@@ -66,17 +66,6 @@ export class MyMCP extends McpAgent {
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
 
-    // Serve method for HTTP handling
-    static serve(path: string) {
-        return {
-            async fetch(request: Request, env: Env, ctx: ExecutionContext) {
-                const state = await env.MCP_OBJECT.get(env.MCP_OBJECT.idFromName("singleton"));
-                const obj = await state.get(env.MCP_OBJECT);
-                const mcp = new MyMCP(state, env);
-                return mcp.server.fetch(request);
-            },
-        };
-    }
 
 // Default export for Cloudflare Worker
 export default {
