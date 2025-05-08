@@ -35,7 +35,7 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
-        // Ensure that tools are properly structured and valid
+        // Combine all tools into one array
         const allTools = [
             ...invoicesTools,
             ...commissionsTools,
@@ -52,9 +52,9 @@ export class MyMCP extends McpAgent {
         const registered = new Set<string>();
 
         for (const tool of allTools) {
-            // Validate that the tool has the required properties
-            if (!tool.name || !tool.parameters || !tool.execute) {
-                console.error(`Tool "${tool.name}" is missing required properties. Skipping.`);
+            // Validate tool structure
+            if (!tool.name || !tool.parameters || !tool.execute || typeof tool.execute !== 'function') {
+                console.error(`Tool "${tool.name}" is missing required properties or execute is not a function. Skipping.`);
                 continue;
             }
 
@@ -64,12 +64,11 @@ export class MyMCP extends McpAgent {
             }
 
             try {
-                // Log each tool being registered
                 console.log(`Registering tool: ${tool.name}`);
-                this.server.tool(tool.name, tool.parameters, tool.execute as any);
+                // Register the tool
+                this.server.tool(tool.name, tool.parameters, tool.execute as unknown as (params: any, env: Env) => Promise<any>);
                 registered.add(tool.name);
             } catch (err: any) {
-                // Log detailed error
                 console.error(`Failed to register tool "${tool.name}":`, err);
             }
         }
