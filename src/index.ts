@@ -41,13 +41,26 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
-        console.log("Imported invoicesTools:", invoicesTools); // Debug import
-        console.log("Imported commissionsTools:", commissionsTools);
-        console.log("Imported ordersTools:", ordersTools);
+        // Debug imports
+        console.log("Imported invoicesTools:", JSON.stringify(invoicesTools, null, 2));
+        console.log("Imported commissionsTools:", JSON.stringify(commissionsTools, null, 2));
+        console.log("Imported ordersTools:", JSON.stringify(ordersTools, null, 2));
+
+        // Validate imports
+        if (!Array.isArray(invoicesTools) || invoicesTools.length === 0) {
+            console.error("invoicesTools is empty or not an array:", invoicesTools);
+        }
+        if (!Array.isArray(commissionsTools) || commissionsTools.length === 0) {
+            console.error("commissionsTools is empty or not an array:", commissionsTools);
+        }
+        if (!Array.isArray(ordersTools) || ordersTools.length === 0) {
+            console.error("ordersTools is empty or not an array:", ordersTools);
+        }
+
         const allTools = [
-            ...invoicesTools,
-            ...commissionsTools,
-            ...ordersTools,
+            ...(Array.isArray(invoicesTools) ? invoicesTools : []),
+            ...(Array.isArray(commissionsTools) ? commissionsTools : []),
+            ...(Array.isArray(ordersTools) ? ordersTools : []),
             {
                 name: "getInvoiceSpecification",
                 parameters: z.object({ invoiceId: z.string(), page: z.number().optional() }),
@@ -66,9 +79,10 @@ export class MyMCP extends McpAgent {
 
         for (const tool of toolsToRegister) {
             // Log tool details safely
+            const parametersShape = tool.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown";
             console.log("Tool being processed:", {
                 name: tool.name,
-                parametersShape: tool.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                parametersShape,
                 hasExecute: !!tool.execute,
                 isExecuteFunction: typeof tool.execute === "function",
             });
@@ -105,7 +119,7 @@ export class MyMCP extends McpAgent {
                 console.error(`Error registering tool "${tool.name}":`, err);
                 console.error(`Tool details:`, {
                     name: tool.name,
-                    parametersShape: tool.parameters._def.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                    parametersShape,
                     hasExecute: !!tool.execute,
                 });
             }
