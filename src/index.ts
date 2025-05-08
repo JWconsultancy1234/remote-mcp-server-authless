@@ -35,6 +35,7 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
+        // Ensure that tools are properly structured and valid
         const allTools = [
             ...invoicesTools,
             ...commissionsTools,
@@ -51,22 +52,32 @@ export class MyMCP extends McpAgent {
         const registered = new Set<string>();
 
         for (const tool of allTools) {
+            // Validate that the tool has the required properties
+            if (!tool.name || !tool.parameters || !tool.execute) {
+                console.error(`Tool "${tool.name}" is missing required properties. Skipping.`);
+                continue;
+            }
+
             if (registered.has(tool.name)) {
                 console.warn(`Tool "${tool.name}" is already registered, skipping.`);
                 continue;
             }
+
             try {
+                // Log each tool being registered
+                console.log(`Registering tool: ${tool.name}`);
                 this.server.tool(tool.name, tool.parameters, tool.execute as any);
                 registered.add(tool.name);
             } catch (err: any) {
-                console.error(`Failed to register tool "${tool.name}": ${err.message}`);
+                // Log detailed error
+                console.error(`Failed to register tool "${tool.name}":`, err);
             }
         }
 
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
-
 }
+
 // Default export for Cloudflare Worker
 export default {
     fetch(request: Request, env: Env, ctx: ExecutionContext) {
