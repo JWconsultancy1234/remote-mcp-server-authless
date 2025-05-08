@@ -43,27 +43,20 @@ export const invoicesTools = [
         name: 'getInvoiceDetails',
         description: 'Haalt de gedetailleerde JSON specificatie op voor een specifieke bol.com factuur aan de hand van het factuur ID. Bevat een gepagineerde lijst van transacties.',
         parameters: GetInvoiceDetailsParams,
-        execute: async ({ params, env }: { params: z.infer<typeof GetInvoiceDetailsParams>, env: Env }) => {
-            try {
-                // Roep de helper functie aan uit bol-api.ts.
-                // We vragen expliciet het JSON formaat op voor verwerking door de AI.
-                const data = await getInvoiceDetails(env, params.invoiceId, params.page, 'application/vnd.retailer.v10+json'); [4, 5] // Specificeer JSON content type [5-9]
+        execute: execute: async (params: z.infer<typeof GetInvoiceDetailsParams>, env: Env) => {
+    try {
+        const data = await getInvoiceDetails(env, params.invoiceId, params.page, 'application/vnd.retailer.v10+json');
+        return {
+            content: [{ type: 'json', json: data }],
+        };
+    } catch (error: any) {
+        console.error(`Error in getInvoiceDetails tool for ID ${params.invoiceId}:`, error);
+        return {
+            content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van de factuurdetails voor ID ${params.invoiceId}: ${error.message}.` }],
+        };
+    }
+},
 
-                // Retourneer de data als JSON
-                return {
-                    content: [{ type: 'json', json: data }]
-                };
-            } catch (error: any) {
-                // Handel fouten af
-                 console.error(`Error in getInvoiceDetails tool for ID ${params.invoiceId}:`, error);
-                 // Specifieke foutafhandeling kan hier, zoals controleren op 404 Not Found [7]
-                let errorMessage = error.message;
-                 // API fouten worden door callBolApi al gelogd en geworpen, dus hier vangen en doorgeven volstaat.
-                return {
-                    content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van de factuurdetails voor ID ${params.invoiceId}: ${errorMessage}.` }]
-                };
-            }
-        },
     },
     // Voeg hier eventueel meer tools voor Invoices API toe
 ];
