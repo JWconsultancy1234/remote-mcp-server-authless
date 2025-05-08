@@ -53,6 +53,9 @@ export class MyMCP extends McpAgent {
 
         const registered = new Set<string>();
 
+        // Debug: Log tools array and check its structure
+        console.log("All tools to be processed:", allTools);
+
         for (const tool of allTools) {
             console.log('Tool being processed:', tool);
 
@@ -70,6 +73,7 @@ export class MyMCP extends McpAgent {
 
             try {
                 console.log(`Registering tool: ${tool.name}`);
+                // Ensure tool is being passed correctly
                 this.server.tool(tool.name, tool.parameters, tool.execute as unknown as (params: any, env: Env) => Promise<any>);
                 this.registeredTools.add(tool.name); // Mark this tool as registered
                 registered.add(tool.name);
