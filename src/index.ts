@@ -36,9 +36,10 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
-        console.log("Raw invoicesTools:", invoicesTools);
-        console.log("Raw commissionsTools:", commissionsTools);
-        console.log("Raw ordersTools:", ordersTools);
+        // Detailed logging of tool arrays
+        console.log("Raw invoicesTools:", JSON.stringify(invoicesTools, null, 2));
+        console.log("Raw commissionsTools:", JSON.stringify(commissionsTools, null, 2));
+        console.log("Raw ordersTools:", JSON.stringify(ordersTools, null, 2));
 
         if (!invoicesTools || !Array.isArray(invoicesTools)) {
             console.error("invoicesTools is invalid or not an array:", invoicesTools);
@@ -46,27 +47,50 @@ export class MyMCP extends McpAgent {
             console.log("invoicesTools length:", invoicesTools.length);
             invoicesTools.forEach((tool, index) => {
                 console.log(`invoicesTools[${index}]:`, {
-                    name: tool.name,
-                    hasParameters: !!tool.parameters,
-                    hasExecute: !!tool.execute,
+                    name: tool?.name,
+                    parameters: tool?.parameters?._def?.typeName || "undefined",
+                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                    hasExecute: !!tool?.execute,
+                    isExecuteFunction: typeof tool?.execute === "function",
                 });
             });
         }
+
         if (!commissionsTools || !Array.isArray(commissionsTools)) {
             console.error("commissionsTools is invalid or not an array:", commissionsTools);
         } else {
             console.log("commissionsTools length:", commissionsTools.length);
+            commissionsTools.forEach((tool, index) => {
+                console.log(`commissionsTools[${index}]:`, {
+                    name: tool?.name,
+                    parameters: tool?.parameters?._def?.typeName || "undefined",
+                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                    hasExecute: !!tool?.execute,
+                    isExecuteFunction: typeof tool?.execute === "function",
+                });
+            });
         }
+
         if (!ordersTools || !Array.isArray(ordersTools)) {
             console.error("ordersTools is invalid or not an array:", ordersTools);
         } else {
             console.log("ordersTools length:", ordersTools.length);
+            ordersTools.forEach((tool, index) => {
+                console.log(`ordersTools[${index}]:`, {
+                    name: tool?.name,
+                    parameters: tool?.parameters?._def?.typeName || "undefined",
+                    parametersShape: tool?.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown",
+                    hasExecute: !!tool?.execute,
+                    isExecuteFunction: typeof tool?.execute === "function",
+                });
+            });
         }
 
+        // Clone tools to prevent mutation
         const allTools = [
-            ...(Array.isArray(invoicesTools) ? invoicesTools : []),
-            ...(Array.isArray(commissionsTools) ? commissionsTools : []),
-            ...(Array.isArray(ordersTools) ? ordersTools : []),
+            ...(Array.isArray(invoicesTools) ? invoicesTools.map(tool => ({ ...tool })) : []),
+            ...(Array.isArray(commissionsTools) ? commissionsTools.map(tool => ({ ...tool })) : []),
+            ...(Array.isArray(ordersTools) ? ordersTools.map(tool => ({ ...tool })) : []),
             {
                 name: "getInvoiceSpecification",
                 parameters: z.object({ invoiceId: z.string(), page: z.number().optional() }),
@@ -87,6 +111,7 @@ export class MyMCP extends McpAgent {
             const parametersShape = tool.parameters?._def?.typeName === "ZodObject" ? Object.keys(tool.parameters._def.shape()) : "unknown";
             console.log("Tool being processed:", {
                 name: tool.name,
+                parameters: tool.parameters?._def?.typeName || "undefined",
                 parametersShape,
                 hasExecute: !!tool.execute,
                 isExecuteFunction: typeof tool.execute === "function",
@@ -130,7 +155,6 @@ export class MyMCP extends McpAgent {
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
 
-    // Add routes for token storage
     async fetch(request: Request): Promise<Response> {
         const url = new URL(request.url);
 
