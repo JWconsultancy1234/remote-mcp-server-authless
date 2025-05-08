@@ -14,29 +14,6 @@ export interface Env {
     MCP_OBJECT: DurableObjectNamespace;
 }
 
-// Define the main MCP class
-export class MyMCP extends McpAgent {
-    server = new McpServer({
-        name: "Bol.com Retailer Tools",
-        version: "1.0",
-    });
-
-    private initialized = false;
-
-    constructor(state: DurableObjectState, env: Env) {
-        super(state, env);
-
-        // Defer init to avoid redundant re-runs
-        this._initOnce();
-    }
-
-    // Run initialization logic only once
-    private async _initOnce() {
-        if (this.initialized) return;
-        this.initialized = true;
-
-        await this.init(); // Safe to run once
-    }
 
     // Initialize all tools
     async init() {
@@ -70,6 +47,7 @@ export class MyMCP extends McpAgent {
 
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
+	
 export default {
 	fetch(request: Request, env: Env, ctx: ExecutionContext) {
 		const url = new URL(request.url);
