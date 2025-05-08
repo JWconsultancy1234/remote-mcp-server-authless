@@ -34,6 +34,7 @@ export class MyMCP extends McpAgent {
         await this.init();
     }
 
+       // Initialize all tools
     async init() {
         const allTools = [
             ...invoicesTools,
@@ -49,6 +50,26 @@ export class MyMCP extends McpAgent {
         ];
 
         const registered = new Set<string>();
+
+        for (const tool of allTools) {
+            if (registered.has(tool.name)) {
+                console.warn(`Tool "${tool.name}" is already registered, skipping.`);
+                continue;
+            }
+            try {
+                this.server.tool(tool.name, tool.parameters, tool.execute as any);
+                registered.add(tool.name);
+            } catch (err: any) {
+                console.error(`Failed to register tool "${tool.name}": ${err.message}`);
+            }
+        }
+
+        console.log(`Successfully added ${registered.size} tools to the MCP server.`);
+    }
+}
+
+        const registered = new Set<string>();
+        
 
         // Register only one tool temporarily for debugging purposes
         const toolsForDebugging = [
