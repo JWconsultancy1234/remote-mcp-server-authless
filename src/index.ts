@@ -78,13 +78,6 @@ export class MyMCP extends McpAgent {
         };
     }
 
-    
-    // Serve SSE (if different implementation is needed)
-    static serveSSE(path: string) {
-        return MyMCP.serve(path); // for now reuse same logic
-    }
-}
-
 // Default export for Cloudflare Worker
 export default {
     fetch(request: Request, env: Env, ctx: ExecutionContext) {
