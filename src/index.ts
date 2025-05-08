@@ -4,15 +4,10 @@ import { z } from "zod";
 import { invoicesTools } from "./tools/invoices";
 import { commissionsTools } from "./tools/commissions";
 import { ordersTools } from "./tools/orders";
+import { Env } from "./types";
 
 // Define Cloudflare Worker environment
 declare const DurableObjectState: any;
-
-export interface Env {
-    BOL_CLIENT_ID: string;
-    BOL_CLIENT_SECRET: string;
-    MCP_OBJECT: DurableObjectNamespace;
-}
 
 type ToolExecute = (params: any, env: Env) => Promise<any>;
 
@@ -41,20 +36,33 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
-        // Debug imports
-        console.log("Imported invoicesTools:", JSON.stringify(invoicesTools, null, 2));
-        console.log("Imported commissionsTools:", JSON.stringify(commissionsTools, null, 2));
-        console.log("Imported ordersTools:", JSON.stringify(ordersTools, null, 2));
+        // Debug raw imports
+        console.log("Raw invoicesTools:", invoicesTools);
+        console.log("Raw commissionsTools:", commissionsTools);
+        console.log("Raw ordersTools:", ordersTools);
 
         // Validate imports
-        if (!Array.isArray(invoicesTools) || invoicesTools.length === 0) {
-            console.error("invoicesTools is empty or not an array:", invoicesTools);
+        if (!invoicesTools || !Array.isArray(invoicesTools)) {
+            console.error("invoicesTools is invalid or not an array:", invoicesTools);
+        } else {
+            console.log("invoicesTools length:", invoicesTools.length);
+            invoicesTools.forEach((tool, index) => {
+                console.log(`invoicesTools[${index}]:`, {
+                    name: tool.name,
+                    hasParameters: !!tool.parameters,
+                    hasExecute: !!tool.execute,
+                });
+            });
         }
-        if (!Array.isArray(commissionsTools) || commissionsTools.length === 0) {
-            console.error("commissionsTools is empty or not an array:", commissionsTools);
+        if (!commissionsTools || !Array.isArray(commissionsTools)) {
+            console.error("commissionsTools is invalid or not an array:", commissionsTools);
+        } else {
+            console.log("commissionsTools length:", commissionsTools.length);
         }
-        if (!Array.isArray(ordersTools) || ordersTools.length === 0) {
-            console.error("ordersTools is empty or not an array:", ordersTools);
+        if (!ordersTools || !Array.isArray(ordersTools)) {
+            console.error("ordersTools is invalid or not an array:", ordersTools);
+        } else {
+            console.log("ordersTools length:", ordersTools.length);
         }
 
         const allTools = [
