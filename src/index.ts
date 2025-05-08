@@ -17,17 +17,17 @@ export class MyMCP extends McpAgent {
     version: "1.0",
   });
 
+  private registeredTools = new Set<string>();
   private initialized = false;
 
   constructor(state: DurableObjectState, env: Env) {
     super(state, env);
-    this._initOnce(); // immediately trigger init logic
+    this._initOnce();
   }
 
   private async _initOnce() {
     if (this.initialized) return;
     this.initialized = true;
-
     await this.init();
   }
 
@@ -43,27 +43,30 @@ export class MyMCP extends McpAgent {
           page: z.number().optional()
         }),
         execute: async ({ invoiceId, page }) => {
-          return { invoiceId, page };
+          return { message: `Fetched invoice spec for ${invoiceId}`, page };
         }
       }
     ];
 
-    const registered = new Set<string>();
+    let count = 0;
 
     for (const tool of allTools) {
-      if (registered.has(tool.name)) {
-        console.warn(`Tool "${tool.name}" is already registered, skipping.`);
+      if (this.registeredTools.has(tool.name)) {
+        console.log(`Tool "${tool.name}" already registered, skipping.`);
         continue;
       }
+
       try {
         this.server.tool(tool.name, tool.parameters, tool.execute as any);
-        registered.add(tool.name);
+        this.registeredTools.add(tool.name);
+        count++;
+        console.log(`Registered tool: ${tool.name}`);
       } catch (err: any) {
         console.error(`Failed to register tool "${tool.name}": ${err.message}`);
       }
     }
 
-    console.log(`Successfully added ${registered.size} tools to the MCP server.`);
+    console.log(`✅ Successfully registered ${count} tool(s).`);
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -74,10 +77,10 @@ export class MyMCP extends McpAgent {
     }
 
     if (url.pathname === "/") {
-      return new Response("Welcome to the MCP server!", { status: 200 });
+      return new Response("✅ MCP server is running", { status: 200 });
     }
 
-    return new Response("Invalid endpoint", { status: 404 });
+    return new Response("❌ Invalid route", { status: 404 });
   }
 
   private handleSSE(): Response {
@@ -101,8 +104,8 @@ export class MyMCP extends McpAgent {
       headers: {
         "Content-Type": "text/event-stream",
         "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-      },
+        "Connection": "keep-alive"
+      }
     });
   }
 }
