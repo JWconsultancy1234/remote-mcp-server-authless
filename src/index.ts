@@ -35,7 +35,6 @@ export class MyMCP extends McpAgent {
     }
 
     async init() {
-        // Combine all tools into one array
         const allTools = [
             ...invoicesTools,
             ...commissionsTools,
@@ -51,8 +50,22 @@ export class MyMCP extends McpAgent {
 
         const registered = new Set<string>();
 
-        for (const tool of allTools) {
-            // Validate tool structure
+        // Register only one tool temporarily for debugging purposes
+        const toolsForDebugging = [
+            {
+                name: "getInvoiceSpecification",
+                parameters: z.object({ invoiceId: z.string(), page: z.number().optional() }),
+                execute: async ({ invoiceId, page }) => {
+                    console.log("Executing getInvoiceSpecification with invoiceId:", invoiceId, "and page:", page);
+                    return { success: true }; // Example response
+                },
+            },
+        ];
+
+        for (const tool of toolsForDebugging) {
+            console.log('Tool being processed:', tool);
+
+            // Log the tool structure
             if (!tool.name || !tool.parameters || !tool.execute || typeof tool.execute !== 'function') {
                 console.error(`Tool "${tool.name}" is missing required properties or execute is not a function. Skipping.`);
                 continue;
@@ -65,11 +78,11 @@ export class MyMCP extends McpAgent {
 
             try {
                 console.log(`Registering tool: ${tool.name}`);
-                // Register the tool
                 this.server.tool(tool.name, tool.parameters, tool.execute as unknown as (params: any, env: Env) => Promise<any>);
                 registered.add(tool.name);
             } catch (err: any) {
-                console.error(`Failed to register tool "${tool.name}":`, err);
+                console.error(`Error registering tool "${tool.name}":`, err);
+                console.error(`Tool details:`, tool);
             }
         }
 
