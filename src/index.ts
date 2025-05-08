@@ -14,8 +14,9 @@ export interface Env {
     MCP_OBJECT: DurableObjectNamespace;
 }
 
-
-    // Initialize all tools
+const MyMCP = {
+    server: new McpServer(),
+    
     async init() {
         const allTools = [
             ...invoicesTools,
@@ -38,7 +39,7 @@ export interface Env {
                 continue;
             }
             try {
-                this.server.tool(tool.name, tool.parameters, tool.execute as any);
+                MyMCP.server.tool(tool.name, tool.parameters, tool.execute as any);
                 registered.add(tool.name);
             } catch (err: any) {
                 console.error(`Failed to register tool "${tool.name}": ${err.message}`);
@@ -47,21 +48,26 @@ export interface Env {
 
         console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
-	
+};
+
 export default {
-	fetch(request: Request, env: Env, ctx: ExecutionContext) {
-		const url = new URL(request.url);
+    async fetch(request: Request, env: Env, ctx: ExecutionContext) {
+        const url = new URL(request.url);
 
-		if (url.pathname === "/sse" || url.pathname === "/sse/message") {
-			// @ts-ignore
-			return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
-		}
+        if (!MyMCP.server) {
+            await MyMCP.init();
+        }
 
-		if (url.pathname === "/mcp") {
-			// @ts-ignore
-			return MyMCP.serve("/mcp").fetch(request, env, ctx);
-		}
+        if (url.pathname === "/sse" || url.pathname === "/sse/message") {
+            // @ts-ignore
+            return MyMCP.server.serveSSE("/sse").fetch(request, env, ctx);
+        }
 
-		return new Response("Not found", { status: 404 });
-	},
+        if (url.pathname === "/mcp") {
+            // @ts-ignore
+            return MyMCP.server.serve("/mcp").fetch(request, env, ctx);
+        }
+
+        return new Response("Not found", { status: 404 });
+    },
 };
