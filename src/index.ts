@@ -56,7 +56,11 @@ export class MyMCP extends McpAgent {
         // Debug: Log tools array and check its structure
         console.log("All tools to be processed:", allTools);
 
-        for (const tool of allTools) {
+        // Ensure tools are registered only once
+        const toolsToRegister = allTools.filter((tool) => !this.registeredTools.has(tool.name));
+        console.log(`Tools to register: ${toolsToRegister.length}`);
+
+        for (const tool of toolsToRegister) {
             console.log('Tool being processed:', tool);
 
             // Log the tool structure
@@ -65,16 +69,10 @@ export class MyMCP extends McpAgent {
                 continue;
             }
 
-            // Check if the tool is already registered
-            if (this.registeredTools.has(tool.name)) {
-                console.warn(`Tool "${tool.name}" is already registered, skipping.`);
-                continue;
-            }
-
             try {
                 console.log(`Registering tool: ${tool.name}`);
                 // Ensure tool is being passed correctly
-                this.server.tool(tool.name, tool.parameters, tool.execute as unknown as (params: any, env: Env) => Promise<any>);
+                await this.server.tool(tool.name, tool.parameters, tool.execute as unknown as (params: any, env: Env) => Promise<any>);
                 this.registeredTools.add(tool.name); // Mark this tool as registered
                 registered.add(tool.name);
             } catch (err: any) {
