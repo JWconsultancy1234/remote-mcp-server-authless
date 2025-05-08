@@ -1,6 +1,7 @@
-import { z } from "zod"; // Importeren voor parameterdefinitie
-import { getInvoiceRequests, getInvoiceDetails } from "../bol-api"; // Importeren van de bol.com API helper functies
-import { Env } from "../index"; // Importeren van het Env type
+// invoices.ts
+import { z } from "zod";
+import { getInvoiceRequests, getInvoiceDetails } from "../bol-api";
+import { Env } from "../types"; // Update to use types.ts
 
 // Parameters voor getInvoiceList tool
 const GetInvoiceListParams = z.object({
@@ -54,3 +55,5 @@ export const invoicesTools = [
         },
     },
 ];
+
+console.log("Exporting invoicesTools:", invoicesTools);
