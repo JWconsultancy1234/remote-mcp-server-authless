@@ -5,6 +5,7 @@ import { invoicesTools } from "./tools/invoices";
 import { commissionsTools } from "./tools/commissions";
 import { ordersTools } from "./tools/orders";
 
+// Cloudflare environment types
 export interface Env {
     BOL_CLIENT_ID: string;
     BOL_CLIENT_SECRET: string;
@@ -18,56 +19,65 @@ export class MyMCP extends McpAgent {
     });
 
     private initialized = false;
-    private registeredTools = new Set<string>();
 
     constructor(state: DurableObjectState, env: Env) {
         super(state, env);
-        this._initOnce();
     }
 
-    private async _initOnce() {
+    private async initOnce() {
         if (this.initialized) return;
         this.initialized = true;
-        await this.init();
-    }
 
-    async init() {
         const allTools = [
             ...invoicesTools,
             ...commissionsTools,
             ...ordersTools,
             {
                 name: "getInvoiceSpecification",
-                parameters: z.object({ invoiceId: z.string(), page: z.number().optional() }),
+                parameters: z.object({
+                    invoiceId: z.string(),
+                    page: z.number().optional()
+                }),
                 execute: async ({ invoiceId, page }) => {
-                    // Example logic
+                    // Your tool logic
                     return { invoiceId, page };
-                },
-            },
+                }
+            }
         ];
 
-        let newlyRegistered = 0;
-
+        const registered = new Set<string>();
         for (const tool of allTools) {
-            if (this.registeredTools.has(tool.name)) {
-                console.log(`Tool "${tool.name}" is already registered, skipping.`);
+            if (registered.has(tool.name)) {
+                console.warn(`Tool "${tool.name}" is already registered, skipping.`);
                 continue;
             }
-
             try {
                 this.server.tool(tool.name, tool.parameters, tool.execute as any);
-                this.registeredTools.add(tool.name);
-                newlyRegistered++;
-                console.log(`Registered tool: ${tool.name}`);
+                registered.add(tool.name);
             } catch (err: any) {
                 console.error(`Failed to register tool "${tool.name}": ${err.message}`);
             }
         }
 
-        console.log(`✅ Successfully registered ${newlyRegistered} new tool(s).`);
+        console.log(`Successfully added ${registered.size} tools to the MCP server.`);
     }
 
-    private async handleSSE(request: Request): Promise<Response> {
+    async fetch(request: Request): Promise<Response> {
+        const url = new URL(request.url);
+        await this.initOnce();
+
+        if (url.pathname === "/sse") {
+            return this.handleSSE();
+        }
+
+        if (url.pathname === "/") {
+            return new Response("Welcome to the MCP server!", { status: 200 });
+        }
+
+        return new Response("Invalid endpoint", { status: 404 });
+    }
+
+    private handleSSE(): Response {
         const stream = new ReadableStream({
             start(controller) {
                 const encoder = new TextEncoder();
@@ -81,38 +91,15 @@ export class MyMCP extends McpAgent {
                     clearInterval(interval);
                     controller.close();
                 }, 60000);
-            },
+            }
         });
 
         return new Response(stream, {
             headers: {
-                'Content-Type': 'text/event-stream',
-                'Cache-Control': 'no-cache',
-                'Connection': 'keep-alive',
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
             },
         });
     }
-
-    async fetch(request: Request): Promise<Response> {
-        const url = new URL(request.url);
-
-        if (url.pathname === '/sse') {
-            return this.handleSSE(request);
-        }
-
-        if (url.pathname === '/') {
-            return new Response('Welcome to the MCP server!', { status: 200 });
-        }
-
-        return this.server.fetch(request); // Let MCPServer handle /mcp or tool-specific requests
-    }
 }
-
-// Default Worker export for Cloudflare
-export default {
-    async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
-        const id = env.MCP_OBJECT.idFromName("mcp-server-instance");
-        const stub = env.MCP_OBJECT.get(id);
-        return stub.fetch(request);
-    },
-};
