@@ -1,6 +1,5 @@
 // src/tools/orders.ts
 import { z } from "zod";
-import { getOrdersList, getSingleOrder } from "../bol-api";
 import { Env } from "../types";
 
 const GetOrdersListParams = z.object({
@@ -24,13 +23,8 @@ export const ordersTools = [
         description: 'Haalt een gepagineerde lijst van orders op.',
         parameters: GetOrdersListParams,
         execute: async (params: z.infer<typeof GetOrdersListParams>, env: Env) => {
-            try {
-                const data = await getOrdersList(env, params.page, params.fulfilmentMethod, params.status, params.latestChangeDate);
-                return { content: [{ type: 'json', json: data }] };
-            } catch (error: any) {
-                console.error('Error in getOrdersList tool:', error);
-                return { content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van de orders lijst: ${error.message}.` }] };
-            }
+            console.log("Mock execute for getOrdersList:", params);
+            return { content: [{ type: 'json', json: { mock: true, params } }] };
         },
     },
     {
@@ -38,13 +32,8 @@ export const ordersTools = [
         description: 'Haalt gedetailleerde informatie op voor een specifieke order.',
         parameters: GetSingleOrderParams,
         execute: async (params: z.infer<typeof GetSingleOrderParams>, env: Env) => {
-            try {
-                const data = await getSingleOrder(env, params.orderId);
-                return { content: [{ type: 'json', json: data }] };
-            } catch (error: any) {
-                console.error('Error in getSingleOrder tool for Order ID', params.orderId, ':', error);
-                return { content: [{ type: 'text', text: `Er is een fout opgetreden bij het ophalen van order details voor Order ID ${params.orderId}: ${error.message}.` }] };
-            }
+            console.log("Mock execute for getSingleOrder:", params);
+            return { content: [{ type: 'json', json: { mock: true, params } }] };
         },
     },
 ];
