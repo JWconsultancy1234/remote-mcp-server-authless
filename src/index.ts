@@ -42,6 +42,20 @@ export class MyMCP extends McpAgent {
             ...ordersTools,
         ];
 
+        // Log schema shapes at import time
+        console.log("Imported invoicesTools:", JSON.stringify(invoicesTools.map(t => ({
+            name: t.name,
+            parametersShape: t.parameters?._def?.typeName === "ZodObject" ? Object.keys(t.parameters._def.shape()) : "unknown",
+        })), null, 2));
+        console.log("Imported commissionsTools:", JSON.stringify(commissionsTools.map(t => ({
+            name: t.name,
+            parametersShape: t.parameters?._def?.typeName === "ZodObject" ? Object.keys(t.parameters._def.shape()) : "unknown",
+        })), null, 2));
+        console.log("Imported ordersTools:", JSON.stringify(ordersTools.map(t => ({
+            name: t.name,
+            parametersShape: t.parameters?._def?.typeName === "ZodObject" ? Object.keys(t.parameters._def.shape()) : "unknown",
+        })), null, 2));
+
         console.log("Raw invoicesTools:", JSON.stringify(invoicesTools, null, 2));
         console.log("Raw commissionsTools:", JSON.stringify(commissionsTools, null, 2));
         console.log("Raw ordersTools:", JSON.stringify(ordersTools, null, 2));
@@ -162,13 +176,29 @@ export class MyMCP extends McpAgent {
             return new Response('Token saved', { status: 200 });
         }
 
-        return super.fetch(request);
+        // Add CORS headers
+        const response = await super.fetch(request);
+        response.headers.set('Access-Control-Allow-Origin', '*');
+        response.headers.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type');
+        return response;
     }
 }
 
 export default {
-    fetch(request: Request, env: Env, ctx: ExecutionContext) {
+    async fetch(request: Request, env: Env, ctx: ExecutionContext) {
         const url = new URL(request.url);
+
+        // Handle CORS preflight
+        if (request.method === 'OPTIONS') {
+            return new Response(null, {
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type',
+                },
+            });
+        }
 
         if (url.pathname === "/sse" || url.pathname === "/sse/message") {
             return MyMCP.serveSSE("/sse").fetch(request, env, ctx);
